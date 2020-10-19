@@ -1,0 +1,43 @@
+name: Dart CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Build Web
+    env:
+      my_secret: ${{secrets.commit_secret}}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '12.x'
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: 'beta'
+      - run: flutter pub get
+      - name: Lint test
+        run: flutter analyze
+      - run: flutter test
+      - run: flutter config --enable-web
+      - run: flutter build web --release --dart-define=FLUTTER_WEB_USE_SKIA=true
+      - run: |
+          cd build/web
+          git init
+          # type configurations: your user.email and user.name followed lines
+          # git config --global user.email your_email
+          # git config --global user.name your_name
+          git config --global user.email tgloc96@gmail.com
+          git config --global user.name tgloc96
+          git status
+          git remote add origin https://${{secrets.commit_secret}}@github.com/tgloc96/flutter_portfolio.git
+          git checkout -b gh-pages
+          git add --all
+          git commit -m "update"
+          git push origin gh-pages -f
+
